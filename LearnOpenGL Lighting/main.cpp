@@ -22,6 +22,10 @@
 #include "Shader.h"
 #include "Camera.h"
 
+#include <assimp\Importer.hpp>
+#include <assimp\scene.h>
+#include <assimp\postprocess.h>
+
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -41,8 +45,21 @@ bool    keys[1024];
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 
+const GLuint NUM_POINT_LIGHTS = 4;
+
+const glm::vec3 horrorDefault = glm::vec3(0.1f, 0.1f, 0.1f);
+const glm::vec3 horrorRed = glm::vec3(0.3f, 0.1f, 0.1f);
+
 Material mat = Material(glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f);
-Light light = Light(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.2f, 1.0f, 2.0f), glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f));
+DirLight dirLight = DirLight(glm::vec3(-0.2f, -1.0f, -0.3f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.2f, 0.2f, 0.2f));
+PointLight pointLights[NUM_POINT_LIGHTS] =
+{
+	PointLight(glm::vec3(0.7f,  0.2f,  2.0f), horrorDefault, horrorDefault, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f),
+	PointLight(glm::vec3(2.3f, -3.3f, -4.0f), horrorDefault, horrorDefault, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f),
+	PointLight(glm::vec3(-4.0f,  2.0f, -12.0f), horrorDefault, horrorDefault, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f),
+	PointLight(glm::vec3(0.0f,  0.0f, -3.0f), horrorRed, horrorRed, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f)
+};
+SpotLight spotLight = SpotLight(camera.Position(), camera.Front(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f, glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)));
 
 int main()
 {
@@ -209,37 +226,52 @@ int main()
 		do_movement();
 
 		// Clear the colorbuffer
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use cooresponding shader when setting uniforms/drawing objects
 		lightingShader.Use();
-
-		GLint lightPosLoc = glGetUniformLocation(lightingShader.Program, "light.position");
-		//GLint lightDirLoc = glGetUniformLocation(lightingShader.Program, "light.direction");
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "light.constant"), 1.0f);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "light.linear"), 0.09);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "light.quadratic"), 0.032);
 		GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
-
-		glUniform3f(lightPosLoc, light.Position().x, light.Position().y, light.Position().z);
-		//glUniform3f(lightDirLoc, -0.2f, -1.0f, -0.3f);
 		glUniform3f(viewPosLoc, camera.Position().x, camera.Position().y, camera.Position().z);
+		// Set material properties
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), mat.Shininess());
 
-		// Light uniforms
-		GLint lightAmbientLoc = glGetUniformLocation(lightingShader.Program, "light.ambient");
-		GLint lightDiffuseLoc = glGetUniformLocation(lightingShader.Program, "light.diffuse");
-		GLint lightSpecularLoc = glGetUniformLocation(lightingShader.Program, "light.specular");
+		// Set directional light uniforms
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"), dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
 
-		glUniform3f(lightAmbientLoc, light.Ambient().x, light.Ambient().y, light.Ambient().z);
-		glUniform3f(lightDiffuseLoc, light.Diffuse().x, light.Diffuse().y, light.Diffuse().z);
-		glUniform3f(lightSpecularLoc, light.Specular().x, light.Specular().y, light.Specular().z);
+		// Set point light uniforms
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "pointLightCount"), NUM_POINT_LIGHTS);
 
-		// Material uniforms
-		GLint matShineLoc = glGetUniformLocation(lightingShader.Program, "material.shininess");
-		glUniform1f(matShineLoc, mat.Shininess());
+		for (GLuint i = 0; i < NUM_POINT_LIGHTS; i++)
+		{
+			std::string idx = std::to_string(i);
 
+			glUniform3f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].position").c_str()), pointLights[i].position.x, pointLights[i].position.y, pointLights[i].position.z);
+			glUniform3f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].ambient").c_str()), pointLights[i].ambient.x, pointLights[i].ambient.y, pointLights[i].ambient.z);
+			glUniform3f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].diffuse").c_str()), pointLights[i].diffuse.x, pointLights[i].diffuse.y, pointLights[i].diffuse.z);
+			glUniform3f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].specular").c_str()), pointLights[i].specular.x, pointLights[i].specular.y, pointLights[i].specular.z);
 
+			glUniform1f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].constant").c_str()), pointLights[i].constant);
+			glUniform1f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].linear").c_str()), pointLights[i].linear);
+			glUniform1f(glGetUniformLocation(lightingShader.Program, ("pointLights[" + idx + "].quadratic").c_str()), pointLights[i].quadratic);
+		}
+		spotLight.position = camera.Position();
+		spotLight.direction = camera.Front();
+		// Set spot light uniforms
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.position"), spotLight.position.x, spotLight.position.y, spotLight.position.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.direction"), spotLight.direction.x, spotLight.direction.y, spotLight.direction.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.ambient"), spotLight.ambient.x, spotLight.ambient.y, spotLight.ambient.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.diffuse"), spotLight.diffuse.x, spotLight.diffuse.y, spotLight.diffuse.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "spotLight.specular"), spotLight.specular.x, spotLight.specular.y, spotLight.specular.z);
+
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.constant"), spotLight.constant);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.linear"), spotLight.linear);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.quadratic"), spotLight.quadratic);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.cutOff"), spotLight.cutOff);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "spotLight.outerCutOff"), spotLight.outerCutOff);
 
 		// Create camera transformations
 		glm::mat4 view;
@@ -296,13 +328,20 @@ int main()
 		// Set matrices
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		model = glm::mat4();
-		model = glm::translate(model, light.Position());
-		model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		// Draw the light object (using light's vertex attributes)
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// draw lamps
+		for (GLuint i = 0; i < NUM_POINT_LIGHTS; i++)
+		{
+			glUniform4f(glGetUniformLocation(lampShader.Program, "Color"), pointLights[i].diffuse.x, pointLights[i].diffuse.y, pointLights[i].diffuse.z, 1.0f);
+			model = glm::mat4();
+			model = glm::translate(model, pointLights[i].position);
+			model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			// Draw the light object (using light's vertex attributes)
+			glBindVertexArray(lightVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
 		glBindVertexArray(0);
 
 

@@ -135,6 +135,11 @@ public:
 		return position;
 	}
 
+	glm::vec3 Front()
+	{
+		return front;
+	}
+
 private:
 
 	void updateCameraVectors()

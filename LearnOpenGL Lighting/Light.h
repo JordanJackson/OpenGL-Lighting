@@ -2,70 +2,53 @@
 
 #include <glm/glm.hpp>
 
-class Light
+struct DirLight
 {
-public:
-	Light(glm::vec3 color, glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) : position(position), ambient(ambient), diffuse(diffuse), specular(specular)
-	{
-		UpdateColors();
-	};
-
-private:
-	glm::vec3 color;
-	glm::vec3 position;
+	glm::vec3 direction;
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
 
-	glm::vec3 diffuseColor;
-	glm::vec3 ambientColor;
-
-public:
-	glm::vec3 Position() const
+	DirLight(glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
+		: direction(direction), ambient(ambient), diffuse(diffuse), specular(specular)
 	{
-		return position;
+
 	}
+};
 
-	glm::vec3 Ambient() const
+struct PointLight
+{
+	glm::vec3 position;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	GLfloat constant;
+	GLfloat linear;
+	GLfloat quadratic;
+
+	PointLight(glm::vec3 position, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, GLfloat constant, GLfloat linear, GLfloat quadratic)
+		: position(position), ambient(ambient), diffuse(diffuse), specular(specular), constant(constant), linear(linear), quadratic(quadratic)
 	{
-		return ambient;
+
 	}
+};
 
-	glm::vec3 Diffuse() const
-	{
-		return diffuse;
-	}
+struct SpotLight
+{
+	glm::vec3 position;
+	glm::vec3 direction;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	GLfloat constant;
+	GLfloat linear;
+	GLfloat quadratic;
+	GLfloat cutOff;
+	GLfloat outerCutOff;
 
-	glm::vec3 DiffuseColor() const
+	SpotLight(glm::vec3 position, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, GLfloat constant, GLfloat linear, GLfloat quadratic, GLfloat cutOff, GLfloat outerCutOff)
+		: position(position), direction(direction), ambient(ambient), diffuse(diffuse), specular(specular), constant(constant), linear(linear), quadratic(quadratic), cutOff(cutOff), outerCutOff(outerCutOff)
 	{
-		return diffuseColor;
-	}
 
-	glm::vec3 AmbientColor() const
-	{
-		return ambientColor;
-	}
-
-	glm::vec3 Specular() const
-	{
-		return specular;
-	}
-
-	glm::vec3 Color() const
-	{
-		return color;
-	}
-
-	void SetColor(glm::vec3 newColor)
-	{
-		color = newColor;
-		UpdateColors();
-	}
-
-private:
-	void UpdateColors()
-	{
-		diffuseColor = diffuse * color;
-		ambientColor = diffuse * color;
 	}
 };
