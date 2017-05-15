@@ -8,6 +8,10 @@
 
 #include <GL/glew.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,13 +21,14 @@ struct Vertex
 {
 	glm::vec3 Position;
 	glm::vec3 Normal;
-	glm::vec3 TexCoords;
+	glm::vec2 TexCoords;
 };
 
 struct Texture
 {
 	GLuint id;
 	std::string type;
+	aiString path;
 };
 
 class Mesh

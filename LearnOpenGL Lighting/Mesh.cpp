@@ -15,21 +15,18 @@ void Mesh::Draw(Shader& shader)
 	for (GLuint i = 0; i < this->textures.size(); i++)
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
-		// Retrieve texture number
-		std::stringstream ss;
-		std::string number;
+
 		std::string name = this->textures[i].type;
 		if (name == "texture_diffuse")
 		{
-			ss << diffuseNr++;
+			name += std::to_string(diffuseNr++);
 		}
 		else if (name == "texture_specular")
 		{
-			ss << specularNr++;
+			name += std::to_string(specularNr++);
 		}
-		number = ss.str();
 
-		glUniform1f(glGetUniformLocation(shader.Program, ("material." + name + number).c_str()), i);
+		glUniform1f(glGetUniformLocation(shader.Program, ("material." + name).c_str()), i);
 		glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
 	}
 	

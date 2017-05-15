@@ -21,10 +21,7 @@
 #include "Material.h"
 #include "Shader.h"
 #include "Camera.h"
-
-#include <assimp\Importer.hpp>
-#include <assimp\scene.h>
-#include <assimp\postprocess.h>
+#include "Model.h"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -97,6 +94,13 @@ int main()
 	// Build and compile our shader program
 	Shader lightingShader("shaders/lighting.vert", "shaders/lighting.frag");
 	Shader lampShader("shaders/lamp.vert", "shaders/lamp.frag");
+	Shader modelShader("shaders/model_loading.vert", "shaders/model_loading.frag");
+
+	// Load models
+	Model ourModel("models/Nanosuit/nanosuit.obj");
+
+	// Draw in wireframe
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Set up vertex data (and buffer(s)) and attribute pointers
 	GLfloat vertices[] = {
@@ -343,6 +347,20 @@ int main()
 		}
 
 		glBindVertexArray(0);
+		
+		// Draw nanosuit
+		modelShader.Use();
+		projection = glm::perspective(camera.Zoom(), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+		view = camera.GetViewMatrix();
+		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		ourModel.Draw(modelShader);
+
+
 
 
 		// Swap the screen buffers
