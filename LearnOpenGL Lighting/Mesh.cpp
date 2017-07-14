@@ -46,11 +46,13 @@ void Mesh::setupMesh()
 
 	glBindVertexArray(this->VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->BoneVB);
+	glBufferData(GL_ARRAY_BUFFER, this->bones.size() * sizeof(VertexBoneData), &this->bones[0], GL_STATIC_DRAW);
 
 	// Vertex Positions
 	glEnableVertexAttribArray(0);
@@ -63,6 +65,14 @@ void Mesh::setupMesh()
 	// Vertex Texture Coords
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, TexCoords));
+
+	// Vertex Bone Data
+	// Bone ID
+	glEnableVertexAttribArray(3);
+	glVertexAttribIPointer(3, 4, GL_INT, sizeof(VertexBoneData), (const GLvoid*)0);
+	// Bone Weight
+	glEnableVertexAttribArray(4);
+	glVertexAttribIPointer(4, 4, GL_INT, sizeof(VertexBoneData), (const GLvoid*)16);
 
 	glBindVertexArray(0);
 }

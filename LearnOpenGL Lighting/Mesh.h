@@ -24,6 +24,14 @@ struct Vertex
 	glm::vec2 TexCoords;
 };
 
+#define NUM_BONES_PER_VERTEX 4
+
+struct VertexBoneData
+{
+	GLuint IDs[NUM_BONES_PER_VERTEX];
+	float Weights[NUM_BONES_PER_VERTEX];
+};
+
 struct Texture
 {
 	GLuint id;
@@ -37,11 +45,14 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
 	std::vector<Texture> textures;
+	std::vector<VertexBoneData> bones;
+
+public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
 	void Draw(Shader& shader);
 
 private:
-	GLuint VAO, VBO, EBO;
+	GLuint VAO, VBO, EBO, BoneVB;
 	void setupMesh();
 };
 

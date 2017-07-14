@@ -15,6 +15,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 // Other includes
 #include "Light.h"
@@ -22,6 +24,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Transform.h"
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -57,6 +60,12 @@ PointLight pointLights[NUM_POINT_LIGHTS] =
 	PointLight(glm::vec3(0.0f,  0.0f, -3.0f), horrorRed, horrorRed, glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f)
 };
 SpotLight spotLight = SpotLight(camera.Position(), camera.Front(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 0.09f, 0.032f, glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.0f)));
+
+GLfloat x = 0.0f;
+GLfloat y = 90.0f;
+GLfloat z = 0.0f;
+
+Transform t = Transform(glm::vec3(0.0f, -1.75f, 0.0f), glm::quat(), glm::vec3(0.02f, 0.02f, 0.02f));
 
 int main()
 {
@@ -97,7 +106,14 @@ int main()
 	Shader modelShader("shaders/model_loading.vert", "shaders/model_loading.frag");
 
 	// Load models
-	Model ourModel("models/Nanosuit/nanosuit.obj");
+	//Model ourModel("models/Nanosuit/nanosuit.obj");
+	Model ourModel("models/Paladin/Paladin_J_Nordstrom.dae");
+	Model animModel("models/Paladin_Idle/idle.dae");
+
+
+	Transform* t2 = new Transform(glm::vec3(100.0f, 0.0f, -5.0f), glm::quat(), glm::vec3(1.0f));
+	
+	t2->setParent(t);
 
 	// Draw in wireframe
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -216,6 +232,8 @@ int main()
 	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), mat.SpecularMap());
 	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.emission"), mat.EmissionMap());
 
+	GLfloat timer = 0.0f;
+
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -223,6 +241,12 @@ int main()
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
+		timer += deltaTime;
+
+		x += 5.0f * deltaTime;
+		y += 5.0f * deltaTime;
+		z += 5.0f * deltaTime;
 
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
@@ -354,13 +378,15 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+
+		t.computeMatrix(glm::mat4());
+		model = t.getMatrix();
 		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		ourModel.Draw(modelShader);
 
-
-
+		model = t2->getMatrix();
+		glUniformMatrix4fv(glGetUniformLocation(modelShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		ourModel.Draw(modelShader);
 
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
@@ -398,6 +424,31 @@ void do_movement()
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (keys[GLFW_KEY_D])
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (keys[GLFW_KEY_LEFT])
+	{
+		t.translate(-t.right() * 0.1f);
+	}
+	if (keys[GLFW_KEY_RIGHT])
+	{
+		t.translate(t.right() * 0.1f);
+	}
+	if (keys[GLFW_KEY_UP])
+	{
+		t.translate(t.forward() * 0.1f);
+	}
+	if (keys[GLFW_KEY_DOWN])
+	{
+		t.translate(-t.forward() * 0.1f);
+	}
+	if (keys[GLFW_KEY_Q])
+	{
+		t.rotate(0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	if (keys[GLFW_KEY_E])
+	{
+		t.rotate(-0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
 }
 
 bool firstMouse = true;

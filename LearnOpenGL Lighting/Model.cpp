@@ -10,19 +10,24 @@ void Model::Draw(Shader& shader)
 
 void Model::loadModel(const std::string& path)
 {
-	Assimp::Importer importer;
 
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	m_aiScene = m_importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_FlipUVs);
 
 	// check if scene or root node are null, or if flagged as incomplete
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	if (!m_aiScene || m_aiScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !m_aiScene->mRootNode)
 	{
-		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+		std::cout << "ERROR::ASSIMP::" << m_importer.GetErrorString() << std::endl;
 		return;
 	}
+
+	std::cout << "Meshes: " << m_aiScene->mNumMeshes << std::endl << "Textures: " << m_aiScene->mNumMaterials << std::endl << "Animations: " << m_aiScene->mNumAnimations << std::endl;
+
+	m_GlobalInverseTransform = m_aiScene->mRootNode->mTransformation;
+	m_GlobalInverseTransform.Inverse();
+
 	this->directory = path.substr(0, path.find_last_of('/'));
 	// pass root node to recursive processNode function
-	this->processNode(scene->mRootNode, scene);
+	this->processNode(m_aiScene->mRootNode, m_aiScene);
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)
@@ -45,6 +50,15 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
 	std::vector<Texture> textures;
+	std::vector<VertexBoneData> bones;
+
+	m_BoneMapping = std::map<std::string, GLuint>();
+
+	std::cout << "Mesh: " <<
+		" Vertices: " << mesh->mNumVertices <<
+		" Indices: " << mesh->mNumFaces <<
+		" Textures: " << mesh->mMaterialIndex <<
+		" Bones: " << mesh->mNumBones << std::endl;
 
 	// Process vertices
 	for (GLuint i = 0; i < mesh->mNumVertices; i++)
@@ -89,6 +103,35 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		{
 			indices.push_back(face.mIndices[j]);
 		}
+	}
+
+	// Process bones
+	bones.resize(mesh->mNumVertices);
+	for (GLuint i = 0; i < mesh->mNumBones; i++)
+	{
+		GLuint boneIndex = 0;
+		std::string boneName(mesh->mBones[i]->mName.data);
+
+		if (m_BoneMapping.find(boneName) == m_BoneMapping.end())
+		{
+			boneIndex = m_NumBones;
+			m_NumBones++;
+			BoneInfo bInfo;
+			m_BoneInfo.push_back(bInfo);
+		}
+		else
+		{
+			boneIndex = m_BoneMapping[boneName];
+		}
+
+		m_BoneMapping[boneName] = boneIndex;
+		m_BoneInfo[boneIndex].boneOffset = AssimpMatToGlmMat(mesh->mBones[i]->mOffsetMatrix);
+
+		for (GLuint j = 0; j < mesh->mBones[i]->mNumWeights; j++)
+		{
+			GLuint vertexID = 
+		}
+		
 	}
 
 	// Process material

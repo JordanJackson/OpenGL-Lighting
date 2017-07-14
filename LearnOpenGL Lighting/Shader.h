@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <string>
 #include <fstream>
@@ -98,5 +97,3 @@ public:
 	}
 
 };
-
-#endif
