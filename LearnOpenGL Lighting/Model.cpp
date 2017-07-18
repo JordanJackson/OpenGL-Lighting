@@ -28,6 +28,8 @@ void Model::loadModel(const std::string& path)
 	this->directory = path.substr(0, path.find_last_of('/'));
 	// pass root node to recursive processNode function
 	this->processNode(m_aiScene->mRootNode, m_aiScene);
+
+	std::cout << "Mesh loaded." << std::endl;
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)
@@ -38,6 +40,7 @@ void Model::processNode(aiNode* node, const aiScene* scene)
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		this->meshes.push_back(this->processMesh(mesh, scene));
 	}
+
 	// Then do the same for each of its children
 	for (GLuint i = 0; i < node->mNumChildren; i++)
 	{
@@ -106,33 +109,33 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	}
 
 	// Process bones
-	bones.resize(mesh->mNumVertices);
-	for (GLuint i = 0; i < mesh->mNumBones; i++)
-	{
-		GLuint boneIndex = 0;
-		std::string boneName(mesh->mBones[i]->mName.data);
+	//bones.resize(mesh->mNumVertices);
+	//for (GLuint i = 0; i < mesh->mNumBones; i++)
+	//{
+	//	GLuint boneIndex = 0;
+	//	std::string boneName(mesh->mBones[i]->mName.data);
 
-		if (m_BoneMapping.find(boneName) == m_BoneMapping.end())
-		{
-			boneIndex = m_NumBones;
-			m_NumBones++;
-			BoneInfo bInfo;
-			m_BoneInfo.push_back(bInfo);
-		}
-		else
-		{
-			boneIndex = m_BoneMapping[boneName];
-		}
+	//	if (m_BoneMapping.find(boneName) == m_BoneMapping.end())
+	//	{
+	//		boneIndex = m_NumBones;
+	//		m_NumBones++;
+	//		BoneInfo bInfo;
+	//		m_BoneInfo.push_back(bInfo);
+	//	}
+	//	else
+	//	{
+	//		boneIndex = m_BoneMapping[boneName];
+	//	}
 
-		m_BoneMapping[boneName] = boneIndex;
-		m_BoneInfo[boneIndex].boneOffset = AssimpMatToGlmMat(mesh->mBones[i]->mOffsetMatrix);
+	//	m_BoneMapping[boneName] = boneIndex;
+	//	m_BoneInfo[boneIndex].boneOffset = AssimpMatToGlmMat(mesh->mBones[i]->mOffsetMatrix);
 
-		for (GLuint j = 0; j < mesh->mBones[i]->mNumWeights; j++)
-		{
-			GLuint vertexID = 
-		}
-		
-	}
+	//	//for (GLuint j = 0; j < mesh->mBones[i]->mNumWeights; j++)
+	//	//{
+	//	//	GLuint vertexID = 
+	//	//}
+	//	
+	//}
 
 	// Process material
 	if (mesh->mMaterialIndex >= 0)
@@ -147,7 +150,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 	}
 
-	return Mesh(vertices, indices, textures);
+	return Mesh(vertices, indices, textures, bones);
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)

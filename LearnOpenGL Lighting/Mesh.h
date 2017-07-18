@@ -48,7 +48,7 @@ public:
 	std::vector<VertexBoneData> bones;
 
 public:
-	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
+	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures, std::vector<VertexBoneData>& bones);
 	void Draw(Shader& shader);
 
 private:

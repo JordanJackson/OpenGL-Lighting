@@ -1,8 +1,8 @@
 #include "Mesh.h"
 
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures)
-	: vertices(vertices), indices(indices), textures(textures)
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures, std::vector<VertexBoneData>& bones)
+	: vertices(vertices), indices(indices), textures(textures), bones(bones)
 {
 	this->setupMesh();
 }
@@ -51,8 +51,8 @@ void Mesh::setupMesh()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices[0], GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, this->BoneVB);
-	glBufferData(GL_ARRAY_BUFFER, this->bones.size() * sizeof(VertexBoneData), &this->bones[0], GL_STATIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, this->BoneVB);
+	//glBufferData(GL_ARRAY_BUFFER, this->bones.size() * sizeof(VertexBoneData), &this->bones[0], GL_STATIC_DRAW);
 
 	// Vertex Positions
 	glEnableVertexAttribArray(0);

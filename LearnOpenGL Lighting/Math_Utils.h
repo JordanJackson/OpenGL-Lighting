@@ -6,7 +6,7 @@
 
 #include <assimp/matrix4x4.h>
 
-glm::mat4 AssimpMatToGlmMat(const aiMatrix4x4& matrix)
+static glm::mat4 AssimpMatToGlmMat(const aiMatrix4x4& matrix)
 {
 	float values[16] = {
 		matrix.a1, matrix.a2, matrix.a3, matrix.a4,
